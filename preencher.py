@@ -44,10 +44,13 @@ def dataIgual(value, str_hora, str_date, created):
     if t2.hour > 18:
         t1 = datetime.strptime('18:00:00', "%H:%M:%S")
 
+    if t1 > t2:
+        t3 = t1
+        t1 = t2
+        t2 = t3
+
     dif = t2-t1
     time = dif.total_seconds()
-    if t1.hour > t2.hour:
-        time = 3600
 
     if value.get('time'):
         time += value.get('time')
@@ -133,7 +136,8 @@ def abrirExcel():
             })
 
     countHora = separarPorData(newTabela)
-    return somarFaltante(newTabela, countHora, newTabelaFaltante)
+    soma = somarFaltante(newTabela, countHora, newTabelaFaltante)
+    return subtrairHora(soma, separarPorData(soma))
 # abrir registro
 
 
@@ -146,16 +150,17 @@ def abrirRegistro(driver):
             by=By.XPATH, value='//*[@id="tempo-nav"]/div[2]/div/div[2]/div[3]/span[3]/button').click()
         value = demanda[i]
         hours = "%dh %dm" % hm_from_seconds(value.get('time'))
-        preencher(driver, value.get('issue'), hours, value.get('str_date'))
+        preencher(driver, value.get('issue'), hours,
+                  formataDataJira(value.get('str_date')))
     driver.close()
 
 
 def preencher(driver, demanda, hora, data):
-    print([data, demanda], end='\n')
+    print({'data': data, 'demanda': demanda}, end='\n')
     inputDemanda = driver.find_element(
         by=By.XPATH, value='//*[@id="issuePickerInput"]')
     inputDemanda.send_keys(demanda)
-    time.sleep(3)
+    time.sleep(2)
     inputDemanda.send_keys(Keys.ENTER)
     inputTime = driver.find_element(
         by=By.XPATH, value='//*[@id="timeSpentSeconds"]')
@@ -213,8 +218,14 @@ def somarFaltante(newTabela, countHora, newTabelaFaltante):
                         time += valueFaltante.get('time')
                         if time > 14400:
                             break
+    return newTabela
 
-        if time > 36000:
+
+def subtrairHora(newTabela, countHora):
+    for i in range(len(countHora)):
+        value = countHora[i]
+        time = value.get('time')
+        while time > 36000:
             if checkStrDate(newTabela, value.get('str_date')):
                 for i in range(len(newTabela)):
                     valueSobra = newTabela[i]
@@ -224,6 +235,7 @@ def somarFaltante(newTabela, countHora, newTabelaFaltante):
                         time -= (valueSobra.get('time')-timeSub)
                         if time < 36000:
                             break
+
     return newTabela
 
 
@@ -260,6 +272,27 @@ def hm_from_seconds(seconds):
     return (hours, minutes)
 
     # driver.close()
+
+
+def formataDataJira(data):
+    data = datetime.strptime(data, "%d/%b/%Y")
+    dia = data.strftime("%d")
+    ano = data.strftime("%Y")
+    numMes = data.strftime("%m")
+    meses = {
+        '01': 'jan',
+        '02': 'fev',
+        '03': 'mar',
+        '04': 'abr',
+        '05': 'mai',
+        '06': 'jun',
+        '07': 'jul',
+        '08': 'ago',
+        '09': 'set',
+        '10': 'out',
+        '11': 'nov',
+        '12': 'dez'}
+    return "%s/%s/%s" % (dia, meses.get(numMes), ano)
 
 
 abrirJiraLoga()
