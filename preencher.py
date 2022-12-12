@@ -2,9 +2,10 @@
 import array
 import json
 import time
-from datetime import datetime, timedelta
-
+import os.path
 import pandas as pd
+
+from datetime import datetime, timedelta
 from IPython.display import display
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -16,7 +17,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 config = json.load(open('config.json'))
-
+jalancado = []
 chrome_options = Options()
 chrome_options.add_experimental_option("detach", True)
 
@@ -141,6 +142,24 @@ def abrirExcel():
 # abrir registro
 
 
+def abrirExcelLancado():
+    arr = []
+    path_to_file = 'lancado.xlsx'
+    if os.path.exists(path_to_file):
+        tabela = pd.read_excel(path_to_file)
+        for i, issue in enumerate(tabela["Questão-chave"]):
+            created = tabela.loc[i, "data de Trabalho"]
+            str_date = created.strftime("%d/%b/%Y")
+            hora = float("{:.2f}".format(tabela.loc[i, "Horas"]))
+            time = hora * 60 * 60
+            arr.append({
+                'str_date': str_date,
+                'time': int(time),
+                'hora': hora})
+
+    return arr
+
+
 def abrirRegistro(driver):
 
     # driver.find_element(by=By.XPATH, value='//*[@id="logAnother"]').click()
@@ -178,8 +197,15 @@ def preencher(driver, demanda, hora, data):
         (By.XPATH, '//*[@id="tempo-nav"]/div[2]/div/div[3]/div[1]/div[3]/div/div/div[2]/footer/div[2]/button[1]'))).click()
 
 
-def separarPorData(newTabela):
+def separarPorData(newTabela, lancado=True):
+
     countHora = []
+    if (lancado):
+        global jalancado
+        if (not jalancado):
+            jalancado = separarPorData(abrirExcelLancado(), False)
+        countHora = jalancado
+
     for i in range(len(newTabela)):
         value = newTabela[i]
         time = value.get('time')
@@ -214,14 +240,19 @@ def somarFaltante(newTabela, countHora, newTabelaFaltante):
                 for i in range(len(newTabelaFaltante)):
                     valueFaltante = newTabelaFaltante[i]
                     if valueFaltante.get('str_date') == value.get('str_date'):
-                        newTabela.append(valueFaltante)
                         time += valueFaltante.get('time')
+                        faltante = valueFaltante.get('time')
+                        if time > 14400:
+                            faltante -= time - 14400
+                        if faltante > 0:
+                            newTabela.append({**valueFaltante, 'time': time})
                         if time > 14400:
                             break
     return newTabela
 
 
 def subtrairHora(newTabela, countHora):
+    reajustar = False
     for i in range(len(countHora)):
         value = countHora[i]
         time = value.get('time')
@@ -231,10 +262,19 @@ def subtrairHora(newTabela, countHora):
                     valueSobra = newTabela[i]
                     if valueSobra.get('str_date') == value.get('str_date'):
                         timeSub = int(valueSobra.get('time')/2)
-                        newTabela[i] = {**valueSobra, 'time': timeSub}
-                        time -= (valueSobra.get('time')-timeSub)
-                        if time < 36000:
+                        if timeSub <= 60:
+                            del newTabela[i]
                             break
+                        else:
+                            newTabela[i] = {**valueSobra, 'time': timeSub}
+                            time -= (valueSobra.get('time')-timeSub)
+                            if time < 36000:
+                                break
+            else:
+                time = 0
+
+    if (reajustar):
+        return subtrairHora(newTabela, separarPorData(newTabela))
 
     return newTabela
 
@@ -245,6 +285,8 @@ def printHora(arr):
         # if value.get('time') > 14400:
         hours = "%dh %dm" % hm_from_seconds(value.get('time'))
         print({**value, 'hours': hours}, end='\n')
+
+    print("*", sep="-")
 
 
 def checkIssue(arr, issue):
@@ -296,3 +338,5 @@ def formataDataJira(data):
 
 
 abrirJiraLoga()
+# printHora(separarPorData(abrirExcelLancado(), False))
+# printHora(separarPorData(abrirExcel(), False))
