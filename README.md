@@ -11,17 +11,17 @@ Install using `pip`. You have to be on python >= 3.6.x in order to utilize this 
 1. Clone the repo
 
    ```sh
-   git clone https://github.com/your_username_/Project-Name.git
+   git clone https://github.com/LFC94/PreencherJira.git
    ```
 
 2. Install the package's dependencies in requirements.txt with
    pip by running
 
    ```sh
-    pip install -r requirements.txt.
+    pip install -r requirements.txt
    ```
 
-3. RENAME config.example.json TO config.josn
+3. RENAME config.example.json TO config.json
 
 4. FILL in Jira **username** AND **password** AND **url** IN config.json
 
