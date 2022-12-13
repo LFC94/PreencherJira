@@ -1,2 +1,4 @@
 config.json
 *.xlsx
+build/
+dist/
