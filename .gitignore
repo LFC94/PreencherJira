@@ -2,3 +2,5 @@ config.json
 /*.xlsx
 build/
 dist/
+logs/*
+STATUSPAGE/*

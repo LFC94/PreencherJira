@@ -4,6 +4,8 @@ import json
 import time
 import os.path
 import pandas as pd
+import numpy as np
+import random
 
 from datetime import datetime, timedelta
 from IPython.display import display
@@ -53,11 +55,7 @@ def dataIgual(value, str_hora, str_date, created):
     dif = t2-t1
     time = dif.total_seconds()
 
-    if value.get('time'):
-        time += value.get('time')
-
-    if t1.hour < 12 and t2.hour > 13:
-        time -= 3600
+    time += value.get('time')
 
     return {
         **value, 'time': time,  'str_hora': str_hora, 'str_date': str_date, 'created': created}
@@ -69,14 +67,15 @@ def abrirExcel():
     tabela = pd.read_excel('jira.xlsx')
     for i, issue in enumerate(tabela["Issue Key"]):
         created = tabela.loc[i, "Created"]
+        created = pd.Timestamp(created).to_pydatetime()
         str_date = created.strftime("%d/%b/%Y")
         str_hora = created.strftime("%H:%M:%S")
         if checkIssue(newTabela, issue):
             ultimoI = 0
-            for i in range(len(newTabela)):
-                value = newTabela[i]
+            for index in range(len(newTabela)):
+                value = newTabela[index]
                 if issue == value.get('issue'):
-                    ultimoI = i
+                    ultimoI = index
 
             value = newTabela[ultimoI]
 
@@ -89,8 +88,10 @@ def abrirExcel():
                 t2 = datetime.strptime(str_date, "%d/%b/%Y")
                 diffData = abs((t2-t1).days)
                 if (diffData == 1):
+                    createdFim = datetime.strptime(
+                        str_date + ' 18:00:00', "%d/%b/%Y %H:%M:%S")
                     newTabela[ultimoI] = dataIgual(
-                        value, '18:00:00', value.get('str_date'), str_date + ' 18:00:00')
+                        value, '18:00:00', value.get('str_date'), createdFim)
                     append = dataIgual({
                         'created': created,
                         'str_date': str_date,
@@ -103,11 +104,15 @@ def abrirExcel():
                     dateIni = datetime.strptime(
                         value.get('str_date'), "%d/%b/%Y")
                     dateFim = datetime.strptime(str_date, "%d/%b/%Y")
-                    for sum in range(diffData):
+                    for sum in range(diffData+1):
                         dt = dateIni + timedelta(days=sum)
+
                         if dt.strftime("%d/%b/%Y") == dateIni.strftime("%d/%b/%Y"):
+                            createdFim = datetime.strptime(dt.strftime(
+                                "%d/%b/%Y") + " 18:00:00", "%d/%b/%Y %H:%M:%S")
+
                             newTabela[ultimoI] = dataIgual(
-                                value, '18:00:00', value.get('str_date'), str_date + ' 18:00:00')
+                                value, '18:00:00', value.get('str_date'), createdFim)
                         elif dt.strftime("%d/%b/%Y") == dateFim.strftime("%d/%b/%Y"):
                             append = dataIgual({
                                 'created': created,
@@ -118,13 +123,21 @@ def abrirExcel():
                             }, str_hora, str_date, created)
                             newTabela.append(append)
                         else:
+                            min = random.uniform(50, 59)
+                            hor = random.uniform(15, 17)
+                            hora = "%d:%d:00" % (hor, min)
+
+                            createdIni = datetime.strptime(dt.strftime(
+                                "%d/%b/%Y") + " 08:00:00", "%d/%b/%Y %H:%M:%S")
+                            createdFim = datetime.strptime(dt.strftime(
+                                "%d/%b/%Y") + " " + hora, "%d/%b/%Y %H:%M:%S")
                             append = dataIgual({
-                                'created': dt.strftime("%d/%b/%Y") + " 12:00:00",
+                                'created': createdIni,
                                 'str_date': dt.strftime("%d/%b/%Y"),
                                 'issue': issue,
                                 'str_hora': '08:00:00',
                                 'time': 0.0
-                            }, "12:00:00", dt.strftime("%d/%b/%Y"), dt.strftime("%d/%b/%Y") + " 12:00:00")
+                            }, hora, dt.strftime("%d/%b/%Y"), createdFim)
                             newTabelaFaltante.append(append)
 
         else:
@@ -138,7 +151,8 @@ def abrirExcel():
 
     countHora = separarPorData(newTabela)
     soma = somarFaltante(newTabela, countHora, newTabelaFaltante)
-    return subtrairHora(soma, separarPorData(soma))
+    subtrair = subtrairHora(soma, separarPorData(soma))
+    return filtraFeriasTimeZerado(subtrair)
 # abrir registro
 
 
@@ -235,19 +249,25 @@ def somarFaltante(newTabela, countHora, newTabelaFaltante):
     for i in range(len(countHora)):
         value = countHora[i]
         time = value.get('time')
-        if time < 14400:
+        if time < 28000:
             if checkStrDate(newTabelaFaltante, value.get('str_date')):
                 for i in range(len(newTabelaFaltante)):
                     valueFaltante = newTabelaFaltante[i]
                     if valueFaltante.get('str_date') == value.get('str_date'):
-                        time += valueFaltante.get('time')
-                        faltante = valueFaltante.get('time')
-                        if time > 14400:
-                            faltante -= time - 14400
+                        time += int(valueFaltante.get('time'))
+                        faltante = int(valueFaltante.get('time'))
+                        if time > 28000:
+                            faltante -= time - 28000
                         if faltante > 0:
                             newTabela.append({**valueFaltante, 'time': time})
-                        if time > 14400:
+                        if time > 28000:
                             break
+
+    for index in range(len(newTabelaFaltante)):
+        value = newTabelaFaltante[index]
+        if checkStrDate(newTabela, value.get('str_date')) == False:
+            newTabela.append(value)
+
     return newTabela
 
 
@@ -255,21 +275,22 @@ def subtrairHora(newTabela, countHora):
     reajustar = False
     for i in range(len(countHora)):
         value = countHora[i]
-        time = value.get('time')
-        while time > 36000:
+        time = int(value.get('time'))
+        while time > 36001:
+            timeInicio = time
             if checkStrDate(newTabela, value.get('str_date')):
                 for i in range(len(newTabela)):
+                    possui = False
                     valueSobra = newTabela[i]
                     if valueSobra.get('str_date') == value.get('str_date'):
+                        possui = True
                         timeSub = int(valueSobra.get('time')/2)
-                        if timeSub <= 60:
-                            del newTabela[i]
+                        newTabela[i] = {**valueSobra, 'time': timeSub}
+                        time -= (valueSobra.get('time')-timeSub)
+                        if time < 38000:
                             break
-                        else:
-                            newTabela[i] = {**valueSobra, 'time': timeSub}
-                            time -= (valueSobra.get('time')-timeSub)
-                            if time < 36000:
-                                break
+                if timeInicio == time:
+                    time = 0
             else:
                 time = 0
 
@@ -286,7 +307,7 @@ def printHora(arr):
         hours = "%dh %dm" % hm_from_seconds(value.get('time'))
         print({**value, 'hours': hours}, end='\n')
 
-    print("*", sep="-")
+    print("****************************")
 
 
 def checkIssue(arr, issue):
@@ -335,6 +356,48 @@ def formataDataJira(data):
         '11': 'nov',
         '12': 'dez'}
     return "%s/%s/%s" % (dia, meses.get(numMes), ano)
+
+
+def filtraFeriasTimeZerado(arrTabela):
+    arrRetorno = []
+    for i in range(len(arrTabela)):
+        value = arrTabela[i]
+        if verificarPeriodoInativo(value.get('str_date')):
+            continue
+
+        weekday = datetime.strptime(
+            value.get('str_date'), "%d/%b/%Y").weekday()
+        if weekday == 5 or weekday == 6:
+            continue
+
+        if int(value.get('time')) < 100:
+            continue
+
+        arrRetorno.append(value)
+
+    return arrRetorno
+
+
+def verificarPeriodoInativo(str_date):
+    periodoInativo = [
+        {'start': datetime(2022, 6, 13), 'end': datetime(2022, 7, 7)},
+        {'start': datetime(2022, 1, 1), 'end': datetime(2022, 1, 31)}
+    ]
+
+    created = str_date
+    created = datetime.strptime(created, "%d/%b/%Y")
+    created = datetime(
+        int(created.strftime("%Y")), int(created.strftime("%m"), ), int(created.strftime("%d")))
+    for index in range(len(periodoInativo)):
+        periodo = periodoInativo[index]
+
+        start = periodo.get("start")
+        end = periodo.get("end")
+
+        if start.date() <= created.date() <= end.date():
+            return True
+
+    return False
 
 
 abrirJiraLoga()
