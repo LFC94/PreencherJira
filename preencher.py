@@ -67,7 +67,7 @@ def abrirExcel():
     newTabela = []
     newTabelaFaltante = []
     tabela = pd.read_excel('jira.xlsx')
-    for i, issue in enumerate(tabela["Issue"]):
+    for i, issue in enumerate(tabela["Issue Key"]):
         created = tabela.loc[i, "Created"]
         str_date = created.strftime("%d/%b/%Y")
         str_hora = created.strftime("%H:%M:%S")
@@ -103,7 +103,7 @@ def abrirExcel():
                     dateIni = datetime.strptime(
                         value.get('str_date'), "%d/%b/%Y")
                     dateFim = datetime.strptime(str_date, "%d/%b/%Y")
-                    for sum in range(min(diffData, 5)):
+                    for sum in range(diffData):
                         dt = dateIni + timedelta(days=sum)
                         if dt.strftime("%d/%b/%Y") == dateIni.strftime("%d/%b/%Y"):
                             newTabela[ultimoI] = dataIgual(
