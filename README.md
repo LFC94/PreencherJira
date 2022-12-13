@@ -30,3 +30,11 @@ Install using `pip`. You have to be on python >= 3.6.x in order to utilize this 
 ```sh
 python time_status.py
 ```
+
+6. Copy generated list to project root with name jira.xlsx
+
+7. Para preencher os dados de hora no jira executa
+
+```sh
+python preencher.py
+```
