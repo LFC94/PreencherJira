@@ -25,16 +25,18 @@ Install using `pip`. You have to be on python >= 3.6.x in order to utilize this 
 
 4. FILL in Jira **username** AND **password** AND **url** IN config.json
 
-5. To generate the list of demands, run
+5. In the time_status.py file there is a KEY variable that must be changed to search for your demands
 
-```sh
-python time_status.py
-```
+6. To generate the list of demands, run
 
-6. Copy generated list to project root with name jira.xlsx
+   ```sh
+   python time_status.py
+   ```
 
-7. Para preencher os dados de hora no jira executa
+7. Copy generated list to project root with name jira.xlsx
 
-```sh
-python preencher.py
-```
+8. Para preencher os dados de hora no jira executa
+
+   ```sh
+   python preencher.py
+   ```
