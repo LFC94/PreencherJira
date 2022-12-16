@@ -24,7 +24,7 @@ chrome_options = Options()
 chrome_options.add_experimental_option("detach", True)
 
 
-def abrirJiraLoga():
+def abrirJiraLoga(faltante=False):
     driver = webdriver.Chrome(service=ChromeService(
         ChromeDriverManager().install()), chrome_options=chrome_options)
     url = config['url'] + "/login.jsp?permissionViolation=true&os_destination=%2Fsecure%2FTempo.jspa&page_caps=&user_role=#/my-work/timesheet"
@@ -36,7 +36,7 @@ def abrirJiraLoga():
         by=By.XPATH, value='//*[@id="login-form-password"]').send_keys(config['password'])
     driver.find_element(
         by=By.XPATH, value='//*[@id="login-form-submit"]').click()
-    abrirRegistro(driver)
+    abrirRegistro(driver, faltante)
 
 
 def dataIgual(value, str_hora, str_date, created):
@@ -83,10 +83,10 @@ def abrirExcel():
                 newTabela[ultimoI] = dataIgual(
                     value, str_hora, str_date, created)
             else:
-                t1 = datetime.strptime(
+                dateIni = datetime.strptime(
                     value.get('str_date'), "%d/%b/%Y")
-                t2 = datetime.strptime(str_date, "%d/%b/%Y")
-                diffData = abs((t2-t1).days)
+                dateFim = datetime.strptime(str_date, "%d/%b/%Y")
+                diffData = abs((dateFim-dateIni).days)
                 if (diffData == 1):
                     createdFim = datetime.strptime(
                         str_date + ' 18:00:00', "%d/%b/%Y %H:%M:%S")
@@ -101,12 +101,8 @@ def abrirExcel():
                     }, str_hora, str_date, created)
                     newTabela.append(append)
                 else:
-                    dateIni = datetime.strptime(
-                        value.get('str_date'), "%d/%b/%Y")
-                    dateFim = datetime.strptime(str_date, "%d/%b/%Y")
                     for sum in range(diffData+1):
                         dt = dateIni + timedelta(days=sum)
-
                         if dt.strftime("%d/%b/%Y") == dateIni.strftime("%d/%b/%Y"):
                             createdFim = datetime.strptime(dt.strftime(
                                 "%d/%b/%Y") + " 18:00:00", "%d/%b/%Y %H:%M:%S")
@@ -174,13 +170,15 @@ def abrirExcelLancado():
     return arr
 
 
-def abrirRegistro(driver):
+def abrirRegistro(driver, faltante):
 
     # driver.find_element(by=By.XPATH, value='//*[@id="logAnother"]').click()
-    demanda = abrirExcel()
+    if faltante:
+        demanda = verificarDiasFaltante()
+    else:
+        demanda = abrirExcel()
+
     for i in range(len(demanda)):
-        driver.find_element(
-            by=By.XPATH, value='//*[@id="tempo-nav"]/div[2]/div/div[2]/div[3]/span[3]/button').click()
         value = demanda[i]
         hours = "%dh %dm" % hm_from_seconds(value.get('time'))
         preencher(driver, value.get('issue'), hours,
@@ -190,6 +188,8 @@ def abrirRegistro(driver):
 
 def preencher(driver, demanda, hora, data):
     print({'data': data, 'demanda': demanda}, end='\n')
+    driver.find_element(
+        by=By.XPATH, value='//*[@id="tempo-nav"]/div[2]/div/div[2]/div[3]/span[3]/button').click()
     inputDemanda = driver.find_element(
         by=By.XPATH, value='//*[@id="issuePickerInput"]')
     inputDemanda.send_keys(demanda)
@@ -358,7 +358,7 @@ def formataDataJira(data):
     return "%s/%s/%s" % (dia, meses.get(numMes), ano)
 
 
-def filtraFeriasTimeZerado(arrTabela):
+def filtraFeriasTimeZerado(arrTabela, filZerado=True):
     arrRetorno = []
     for i in range(len(arrTabela)):
         value = arrTabela[i]
@@ -370,7 +370,7 @@ def filtraFeriasTimeZerado(arrTabela):
         if weekday == 5 or weekday == 6:
             continue
 
-        if int(value.get('time')) < 100:
+        if int(value.get('time')) < 100 and filZerado:
             continue
 
         arrRetorno.append(value)
@@ -382,6 +382,26 @@ def verificarPeriodoInativo(str_date):
     periodoInativo = [
         {'start': datetime(2022, 6, 13), 'end': datetime(2022, 7, 7)},
         {'start': datetime(2022, 1, 1), 'end': datetime(2022, 1, 31)}
+    ]
+
+    feriados = [
+        {'data': datetime(2022, 1, 1)},  # Ano Novo
+        {'data': datetime(2022, 2, 28)},  # Carnaval
+        {'data': datetime(2022, 3, 1)},  # Carnaval
+        {'data': datetime(2022, 3, 2)},  # Carnaval
+        {'data': datetime(2022, 4, 15)},  # Sexta-Feira Santa
+        {'data': datetime(2022, 4, 21)},  # Dia de Tiradentes
+        {'data': datetime(2022, 5, 1)},  # Dia do Trabalho
+        {'data': datetime(2022, 6, 16)},  # Corpus Christi
+        {'data': datetime(2022, 9, 7)},  # Independência do Brasil
+        {'data': datetime(2022, 9, 15)},  # Feriado Municipal
+        {'data': datetime(2022, 10, 12)},  # Nossa Senhora Aparecida
+        {'data': datetime(2022, 10, 15)},  # Dia do Professor
+        {'data': datetime(2022, 10, 28)},  # Dia do Servidor Público
+        {'data': datetime(2022, 11, 2)},  # Dia de Finados
+        {'data': datetime(2022, 11, 15)},  # Proclamação da República
+        {'data': datetime(2022, 12, 8)},  # Feriado Municipal
+        {'data': datetime(2022, 12, 25)}  # Natal
     ]
 
     created = str_date
@@ -397,9 +417,52 @@ def verificarPeriodoInativo(str_date):
         if start.date() <= created.date() <= end.date():
             return True
 
+    for index in range(len(feriados)):
+        feriado = feriados[index]
+
+        data = feriado.get("data")
+
+        if data.date() == created.date():
+            return True
+
     return False
 
 
-abrirJiraLoga()
+def verificarDiasFaltante():
+    arrLancado = separarPorData(abrirExcelLancado(), False)
+    dataFaltando = []
+    dateIni = datetime.strptime('01/01/2022', "%d/%m/%Y")
+    t2 = datetime.strptime('30/11/2022', "%d/%m/%Y")
+    diffData = abs((dateIni-t2).days)
+    for sum in range(diffData):
+        dataAt = dateIni + timedelta(days=sum)
+        dataAt = dataAt.strftime("%d/%b/%Y")
+        if not checkStrDate(arrLancado, dataAt):
+            min = random.uniform(10, 20)
+            dataFaltando.append(
+                {'str_date': dataAt, 'issue': 'GRA-149',   'time': min * 60})
+
+            min = random.uniform(50, 59) - min
+            hor = random.uniform(6, 8)
+
+            dataFaltando.append(
+                {'str_date': dataAt, 'issue': 'GRA-71',  'time': ((hor*60)+min)*60})
+        else:
+            for index in range(len(arrLancado)):
+                value = arrLancado[index]
+                if value.get('str_date') == dataAt:
+                    min = random.uniform(25000, 26500)
+                    if value.get('time') < min:
+                        time = min-value.get('time')
+                        dataFaltando.append(
+                            {'str_date': dataAt, 'issue': 'GRA-71',  'time': time})
+                    break
+
+    return filtraFeriasTimeZerado(dataFaltando)
+
+
+# abrirJiraLoga()
+abrirJiraLoga(True)
 # printHora(separarPorData(abrirExcelLancado(), False))
-# printHora(separarPorData(abrirExcel(), False))
+# printHora(abrirExcel())
+# printHora(verificarDiasFaltante())
