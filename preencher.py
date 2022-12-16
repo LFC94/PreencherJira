@@ -165,7 +165,9 @@ def abrirExcelLancado():
             arr.append({
                 'str_date': str_date,
                 'time': int(time),
-                'hora': hora})
+                'hora': hora,
+                'issue': issue
+            })
 
     return arr
 
@@ -378,10 +380,25 @@ def filtraFeriasTimeZerado(arrTabela, filZerado=True):
     return arrRetorno
 
 
+def verificarLancamentoIndevido():
+
+    jalancado = abrirExcelLancado()
+
+    for i in range(len(jalancado)):
+        value = jalancado[i]
+
+        if verificarPeriodoInativo(value.get('str_date')):
+            print({**value})
+
+        weekday = datetime.strptime(
+            value.get('str_date'), "%d/%b/%Y").weekday()
+        if weekday == 5 or weekday == 6:
+            print({**value})
+
+
 def verificarPeriodoInativo(str_date):
     periodoInativo = [
-        {'start': datetime(2022, 6, 13), 'end': datetime(2022, 7, 7)},
-        {'start': datetime(2022, 1, 1), 'end': datetime(2022, 1, 31)}
+        {'start': datetime(2022, 6, 13), 'end': datetime(2022, 7, 7)}
     ]
 
     feriados = [
@@ -462,7 +479,8 @@ def verificarDiasFaltante():
 
 
 # abrirJiraLoga()
-abrirJiraLoga(True)
+# abrirJiraLoga(True)
 # printHora(separarPorData(abrirExcelLancado(), False))
 # printHora(abrirExcel())
 # printHora(verificarDiasFaltante())
+# verificarLancamentoIndevido()
