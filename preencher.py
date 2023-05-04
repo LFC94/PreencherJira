@@ -52,13 +52,12 @@ def dataIgual(value, str_hora, str_date, created):
         t1 = t2
         t2 = t3
 
-    dif = t2-t1
-    time = dif.total_seconds()
-
-    time += value.get('time')
-
+    dif = (t2.hour-t1.hour) * 60
+    dif += t2.minute-t1.minute
+    time2 = dif * 60
+    time = time2 + int(value.get('time'))
     return {
-        **value, 'time': time,  'str_hora': str_hora, 'str_date': str_date, 'created': created}
+        **value, 'time': time, 'time1': time, 'time0': value.get('time'), 'time2': time2,  'str_hora': str_hora, 'str_date': str_date,  'created': created}
 
 
 def abrirExcel():
@@ -71,11 +70,13 @@ def abrirExcel():
         str_date = created.strftime("%d/%b/%Y")
         str_hora = created.strftime("%H:%M:%S")
         if checkIssue(newTabela, issue):
-            ultimoI = 0
+            ultimoI = -1
             for index in range(len(newTabela)):
                 value = newTabela[index]
                 if issue == value.get('issue'):
                     ultimoI = index
+            if ultimoI < 0:
+                continue
 
             value = newTabela[ultimoI]
 
@@ -87,7 +88,7 @@ def abrirExcel():
                     value.get('str_date'), "%d/%b/%Y")
                 dateFim = datetime.strptime(str_date, "%d/%b/%Y")
                 diffData = abs((dateFim-dateIni).days)
-                if (diffData == 1):
+                if (diffData == 0):
                     createdFim = datetime.strptime(
                         str_date + ' 18:00:00', "%d/%b/%Y %H:%M:%S")
                     newTabela[ultimoI] = dataIgual(
@@ -103,15 +104,18 @@ def abrirExcel():
                 else:
                     for sum in range(diffData+1):
                         dt = dateIni + timedelta(days=sum)
+                        min = random.uniform(50, 59)
+                        hor = random.uniform(15, 17)
+                        hora = "%d:%d:00" % (hor, min)
                         if dt.strftime("%d/%b/%Y") == dateIni.strftime("%d/%b/%Y"):
                             createdFim = datetime.strptime(dt.strftime(
-                                "%d/%b/%Y") + " 18:00:00", "%d/%b/%Y %H:%M:%S")
+                                "%d/%b/%Y") + " " + hora, "%d/%b/%Y %H:%M:%S")
 
                             newTabela[ultimoI] = dataIgual(
-                                value, '18:00:00', value.get('str_date'), createdFim)
+                                value, hora, value.get('str_date'), createdFim)
                         elif dt.strftime("%d/%b/%Y") == dateFim.strftime("%d/%b/%Y"):
                             append = dataIgual({
-                                'created': created,
+                                'created': dt,
                                 'str_date': str_date,
                                 'issue': issue,
                                 'str_hora': '08:00:00',
@@ -119,16 +123,12 @@ def abrirExcel():
                             }, str_hora, str_date, created)
                             newTabela.append(append)
                         else:
-                            min = random.uniform(50, 59)
-                            hor = random.uniform(15, 17)
-                            hora = "%d:%d:00" % (hor, min)
-
                             createdIni = datetime.strptime(dt.strftime(
                                 "%d/%b/%Y") + " 08:00:00", "%d/%b/%Y %H:%M:%S")
                             createdFim = datetime.strptime(dt.strftime(
                                 "%d/%b/%Y") + " " + hora, "%d/%b/%Y %H:%M:%S")
                             append = dataIgual({
-                                'created': createdIni,
+                                'created': dt,
                                 'str_date': dt.strftime("%d/%b/%Y"),
                                 'issue': issue,
                                 'str_hora': '08:00:00',
@@ -147,7 +147,7 @@ def abrirExcel():
 
     countHora = separarPorData(newTabela)
     soma = somarFaltante(newTabela, countHora, newTabelaFaltante)
-    subtrair = subtrairHora(soma, separarPorData(soma))
+    subtrair = subtrairHora(newTabela, separarPorData(newTabela))
     return filtraFeriasTimeZerado(subtrair)
 # abrir registro
 
@@ -190,6 +190,7 @@ def abrirRegistro(driver, faltante):
 
 def preencher(driver, demanda, hora, data):
     print({'data': data, 'demanda': demanda}, end='\n')
+    time.sleep(2)
     driver.find_element(
         by=By.XPATH, value='//*[@id="tempo-nav"]/div[2]/div/div[2]/div[3]/span[3]/button').click()
     inputDemanda = driver.find_element(
@@ -209,18 +210,18 @@ def preencher(driver, demanda, hora, data):
         i += 1
     inputData.send_keys(campo + data)
 
+    time.sleep(2)
     WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
         (By.XPATH, '//*[@id="tempo-nav"]/div[2]/div/div[3]/div[1]/div[3]/div/div/div[2]/footer/div[2]/button[1]'))).click()
 
 
 def separarPorData(newTabela, lancado=True):
+    # global jalancado
 
     countHora = []
     if (lancado):
-        global jalancado
-        if (not jalancado):
-            jalancado = separarPorData(abrirExcelLancado(), False)
-        countHora = jalancado
+        # if (not jalancado):
+        countHora = separarPorData(abrirExcelLancado(), False)
 
     for i in range(len(newTabela)):
         value = newTabela[i]
@@ -228,7 +229,7 @@ def separarPorData(newTabela, lancado=True):
         if time <= 1800:
             time = 1800
         data = value.get('str_date')
-        cont = time
+        cont = int(time)
         # hours = "%dh %dm" % hm_from_seconds(cont)
         # print({'issue': value.get('issue'), 'str_date': value.get(
         #     'str_date'), 'hours': hours}, end='\n')
@@ -237,7 +238,7 @@ def separarPorData(newTabela, lancado=True):
             for i in range(len(countHora)):
                 value2 = countHora[i]
                 if value2.get('str_date') == data:
-                    cont += value2.get('time')
+                    cont += int(value2.get('time'))
                     countHora[i] = {**value2, 'time': cont}
         else:
             countHora.append({
@@ -278,38 +279,53 @@ def subtrairHora(newTabela, countHora):
     for i in range(len(countHora)):
         value = countHora[i]
         time = int(value.get('time'))
-        while time > 36001:
+        # print(value.get('str_date') + "**********************", end='\n')
+        while time > 30001:
             timeInicio = time
+            # print(time, end='\n')
             if checkStrDate(newTabela, value.get('str_date')):
-                for i in range(len(newTabela)):
+                for indes in range(len(newTabela)):
                     possui = False
-                    valueSobra = newTabela[i]
+                    valueSobra = newTabela[indes]
                     if valueSobra.get('str_date') == value.get('str_date'):
+                        # print({**valueSobra, 'indes': indes}, end='\n')
                         possui = True
                         timeSub = int(valueSobra.get('time')/2)
-                        newTabela[i] = {**valueSobra, 'time': timeSub}
-                        time -= (valueSobra.get('time')-timeSub)
-                        if time < 38000:
+                        newTabela[indes] = {**valueSobra, 'time': timeSub}
+                        time -= (valueSobra.get('time')/2)
+                        # print({**newTabela[indes], 'indes': indes}, end='\n')
+                        if time < 31000:
                             break
                 if timeInicio == time:
                     time = 0
             else:
                 time = 0
-
+        # print(time, end='\n')
+        # exit()
     if (reajustar):
         return subtrairHora(newTabela, separarPorData(newTabela))
 
     return newTabela
 
 
-def printHora(arr):
+def printHora(arr, excel=False):
+    retorno = []
     for i in range(len(arr)):
         value = arr[i]
         # if value.get('time') > 14400:
-        hours = "%dh %dm" % hm_from_seconds(value.get('time'))
-        print({**value, 'hours': hours}, end='\n')
+        stime = value.get('time')
+        hours = "%dh %dm" % hm_from_seconds(stime)
+        hours2 = timedelta(seconds=stime)
+        linha = {**value, 'hours': hours, 'hours2': str(hours2)}
+        print(linha, end='\n')
+
+        retorno.append(linha)
 
     print("****************************")
+    if excel:
+        df = pd.DataFrame(retorno).to_excel("printHora.xlsx")
+        print(df)
+    return retorno
 
 
 def checkIssue(arr, issue):
@@ -365,14 +381,17 @@ def filtraFeriasTimeZerado(arrTabela, filZerado=True):
     for i in range(len(arrTabela)):
         value = arrTabela[i]
         if verificarPeriodoInativo(value.get('str_date')):
+            # print({'d': value.get('str_date'), 'if': 1})
             continue
 
         weekday = datetime.strptime(
             value.get('str_date'), "%d/%b/%Y").weekday()
         if weekday == 5 or weekday == 6:
+            # print({'d': value.get('str_date'), 'if': 2})
             continue
 
         if int(value.get('time')) < 100 and filZerado:
+            # print({**value, 'if': 3})
             continue
 
         arrRetorno.append(value)
@@ -398,27 +417,28 @@ def verificarLancamentoIndevido():
 
 def verificarPeriodoInativo(str_date):
     periodoInativo = [
-        {'start': datetime(2022, 6, 13), 'end': datetime(2022, 7, 7)}
+        {'start': datetime(2022, 1, 1), 'end': datetime(2023, 1, 1)},
+        {'start': datetime(2023, 3, 10), 'end': datetime(2023, 12, 31)},
     ]
 
     feriados = [
-        {'data': datetime(2022, 1, 1)},  # Ano Novo
-        {'data': datetime(2022, 2, 28)},  # Carnaval
-        {'data': datetime(2022, 3, 1)},  # Carnaval
-        {'data': datetime(2022, 3, 2)},  # Carnaval
-        {'data': datetime(2022, 4, 15)},  # Sexta-Feira Santa
-        {'data': datetime(2022, 4, 21)},  # Dia de Tiradentes
-        {'data': datetime(2022, 5, 1)},  # Dia do Trabalho
-        {'data': datetime(2022, 6, 16)},  # Corpus Christi
-        {'data': datetime(2022, 9, 7)},  # Independência do Brasil
-        {'data': datetime(2022, 9, 15)},  # Feriado Municipal
-        {'data': datetime(2022, 10, 12)},  # Nossa Senhora Aparecida
-        {'data': datetime(2022, 10, 15)},  # Dia do Professor
-        {'data': datetime(2022, 10, 28)},  # Dia do Servidor Público
-        {'data': datetime(2022, 11, 2)},  # Dia de Finados
-        {'data': datetime(2022, 11, 15)},  # Proclamação da República
-        {'data': datetime(2022, 12, 8)},  # Feriado Municipal
-        {'data': datetime(2022, 12, 25)}  # Natal
+        {'data': datetime(2023, 1, 1)},  # Ano Novo
+        {'data': datetime(2023, 2, 20)},  # Carnaval
+        {'data': datetime(2023, 2, 21)},  # Carnaval
+        {'data': datetime(2023, 2, 22)},  # Carnaval
+        {'data': datetime(2023, 4, 7)},  # Sexta-Feira Santa
+        {'data': datetime(2023, 4, 21)},  # Dia de Tiradentes
+        {'data': datetime(2023, 5, 1)},  # Dia do Trabalho
+        {'data': datetime(2023, 6, 8)},  # Corpus Christi
+        {'data': datetime(2023, 9, 7)},  # Independência do Brasil
+        {'data': datetime(2023, 9, 15)},  # Feriado Municipal
+        {'data': datetime(2023, 10, 12)},  # Nossa Senhora Aparecida
+        {'data': datetime(2023, 10, 15)},  # Dia do Professor
+        {'data': datetime(2023, 10, 28)},  # Dia do Servidor Público
+        {'data': datetime(2023, 11, 2)},  # Dia de Finados
+        {'data': datetime(2023, 11, 15)},  # Proclamação da República
+        {'data': datetime(2023, 12, 8)},  # Feriado Municipal
+        {'data': datetime(2023, 12, 25)},  # Natal
     ]
 
     created = str_date
@@ -448,8 +468,8 @@ def verificarPeriodoInativo(str_date):
 def verificarDiasFaltante():
     arrLancado = separarPorData(abrirExcelLancado(), False)
     dataFaltando = []
-    dateIni = datetime.strptime('01/01/2022', "%d/%m/%Y")
-    t2 = datetime.strptime('30/11/2022', "%d/%m/%Y")
+    dateIni = datetime.strptime('01/01/2023', "%d/%m/%Y")
+    t2 = datetime.strptime('30/12/2023', "%d/%m/%Y")
     diffData = abs((dateIni-t2).days)
     for sum in range(diffData):
         dataAt = dateIni + timedelta(days=sum)
@@ -460,7 +480,7 @@ def verificarDiasFaltante():
                 {'str_date': dataAt, 'issue': 'GRA-149',   'time': min * 60})
 
             min = random.uniform(50, 59) - min
-            hor = random.uniform(6, 8)
+            hor = random.uniform(6, 7)
 
             dataFaltando.append(
                 {'str_date': dataAt, 'issue': 'GRA-71',  'time': ((hor*60)+min)*60})
