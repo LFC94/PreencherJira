@@ -5,7 +5,12 @@ from jiraone.module import time_in_status
 
 LOGIN.api = False
 config = json.load(open('config.json'))
-LOGIN(**config)
+LOGIN(**{
+    "user": config['user'],
+    "password": config['password'],
+    "url": config['url'],
+}
+)
 
 # count_start_at = 0
 # validate = LOGIN.get(endpoint.myself())
@@ -24,12 +29,14 @@ LOGIN(**config)
 # key = {
 #     "jql": 'updated >= 2022-01-01 AND updated <= 2022-12-31 AND author in ("'+name+'") ORDER BY updated DESC'}
 
-evolutiva = "" # Evolutiva X
-dataInicial = "" # 2023-01-01
-dataFinal = "" # 2023-12-01
+print("".center(50, "_"))
+print(" Buscar as demandas ".center(50, "-") + "\n")
+evolutiva = input("\n Qual Evolutiva? (1, 2, 3) =>")
+dataInicial = input("\n Data Inicial? (Y-M-D 2023-01-01) =>")
+dataFinal = input("\n Data Final? (Y-M-D 2023-12-31) =>")
 
 key = {
-    "jql": f'"Equipe de atendimento" = "{evolutiva}" AND created >= {dataInicial} AND created <= {dataFinal} ORDER BY created DESC, updated DESC'}
+    "jql": f'"Equipe de atendimento" = "Evolutiva {evolutiva}" AND created >= {dataInicial} AND created <= {dataFinal} ORDER BY created DESC, updated DESC'}
 
 if (__name__ == "__main__"):
     status = time_in_status(PROJECT, key, file_reader, pprint=True, is_printable=False,
