@@ -23,6 +23,9 @@ jalancado = []
 chrome_options = Options()
 chrome_options.add_experimental_option("detach", True)
 
+def lancarHorasFaltante():
+    abrirJiraLoga(True)
+
 
 def abrirJiraLoga(faltante=False):
     driver = webdriver.Chrome(service=ChromeService(
@@ -280,7 +283,7 @@ def subtrairHora(newTabela, countHora):
         value = countHora[i]
         time = int(value.get('time'))
         # print(value.get('str_date') + "**********************", end='\n')
-        while time > 30001:
+        while time > 32001:
             timeInicio = time
             # print(time, end='\n')
             if checkStrDate(newTabela, value.get('str_date')):
@@ -294,7 +297,7 @@ def subtrairHora(newTabela, countHora):
                         newTabela[indes] = {**valueSobra, 'time': timeSub}
                         time -= (valueSobra.get('time')/2)
                         # print({**newTabela[indes], 'indes': indes}, end='\n')
-                        if time < 31000:
+                        if time < 32100:
                             break
                 if timeInicio == time:
                     time = 0
@@ -417,8 +420,8 @@ def verificarLancamentoIndevido():
 
 def verificarPeriodoInativo(str_date):
     periodoInativo = [
-        {'start': datetime(2022, 1, 1), 'end': datetime(2023, 1, 1)},
-        {'start': datetime(2023, 3, 10), 'end': datetime(2023, 12, 31)},
+        {'start': datetime(2022, 1, 1), 'end': datetime(2023, 7, 10)},
+        # {'start': datetime(2023, 6, 21), 'end': datetime(2023, 6, 30)},
     ]
 
     feriados = [
@@ -475,10 +478,10 @@ def verificarDiasFaltante():
         dataAt = dateIni + timedelta(days=sum)
         dataAt = dataAt.strftime("%d/%b/%Y")
         if not checkStrDate(arrLancado, dataAt):
-            min = random.uniform(10, 20)
-            dataFaltando.append(
-                {'str_date': dataAt, 'issue': 'GRA-149',   'time': min * 60})
-
+            # min = random.uniform(10, 20)
+            # dataFaltando.append(
+            #     {'str_date': dataAt, 'issue': 'GRA-149',   'time': min * 60})
+            min = 0
             min = random.uniform(50, 59) - min
             hor = random.uniform(6, 7)
 
@@ -497,10 +500,42 @@ def verificarDiasFaltante():
 
     return filtraFeriasTimeZerado(dataFaltando)
 
+def getHorasDemandaLancadoData():
+    printHora(separarPorData(abrirExcelLancado(), False))
 
-# abrirJiraLoga()
-# abrirJiraLoga(True)
-# printHora(separarPorData(abrirExcelLancado(), False))
-# printHora(abrirExcel())
-# printHora(verificarDiasFaltante())
-# verificarLancamentoIndevido()
+def getHorasDemandaData():
+    printHora(separarPorData(abrirExcel(), False))
+
+def getHorasDemanda():
+    printHora(abrirExcel(), True)
+
+def getHorasFaltantes():
+    printHora(verificarDiasFaltante(), True)
+
+def menu():
+    print("".center(50, "_"))
+    print(" MENU ".center(50, "-") + "\n")
+    MENU = {'1': {'title': 'Lancar Horas demanda', 'function': abrirJiraLoga},
+            '2': {'title': 'Lancar Horas Faltantes', 'function': lancarHorasFaltante},
+            '3': {'title': 'Ver horas demanda lancado por data', 'function': getHorasDemandaLancadoData},
+            '4': {'title': 'Ver horas demanda por data', 'function': getHorasDemandaData},
+            '5': {'title': 'Ver horas demanda', 'function': getHorasDemanda},
+            '6': {'title': 'Ver horas faltante', 'function': getHorasFaltantes},
+            's': {'title': 'Sair'}}
+
+    for key, item in MENU.items():
+        title = item.get('title', '').upper()
+        print(f"[{key}] - {title}")
+    opcao = input("\n=>")
+
+    if opcao not in MENU.keys():
+        print("Operação inválida")
+
+    if opcao in MENU.keys() and MENU[opcao].get('function', False):
+        print(MENU.get(opcao).get('title').upper().center(50, "-"))
+        MENU[opcao].get('function')()
+        print("".center(50, "_"))
+        menu()
+
+
+menu()
