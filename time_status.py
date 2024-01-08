@@ -24,8 +24,12 @@ LOGIN(**config)
 # key = {
 #     "jql": 'updated >= 2022-01-01 AND updated <= 2022-12-31 AND author in ("'+name+'") ORDER BY updated DESC'}
 
+evolutiva = "" # Evolutiva X
+dataInicial = "" # 2023-01-01
+dataFinal = "" # 2023-12-01
+
 key = {
-    "jql": '"Equipe de atendimento" = "Evolutiva 1" AND created >= 2022-12-01 AND created <= 2023-12-31 ORDER BY created DESC, updated DESC'}
+    "jql": f'"Equipe de atendimento" = "{evolutiva}" AND created >= {dataInicial} AND created <= {dataFinal} ORDER BY created DESC, updated DESC'}
 
 if (__name__ == "__main__"):
     status = time_in_status(PROJECT, key, file_reader, pprint=True, is_printable=False,
