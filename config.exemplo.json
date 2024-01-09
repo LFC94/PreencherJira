@@ -1,5 +1,14 @@
 {
   "user": "l@br",
   "password": "*",
-  "url": "https://jira.com.br/"
+  "url": "https://jira.com.br/",
+  "periodoInativo": [
+    {
+      "inicio": "01/01/2023",
+      "fim": "30/01/2023"
+    },
+    {
+      "inicio": ""
+    }
+  ]
 }

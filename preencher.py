@@ -19,17 +19,21 @@ from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
 config = json.load(open('config.json'))
-jalancado = []
-chrome_options = Options()
-chrome_options.add_experimental_option("detach", True)
+anoLancamento = 2023
+
 
 def lancarHorasFaltante():
     abrirJiraLoga(True)
 
 
-def abrirJiraLoga(faltante=False):
+def lancarHorasDaily():
+    abrirJiraLoga(daily=True)
+
+
+def abrirJiraLoga(faltante=False, daily=False):
     driver = webdriver.Chrome(service=ChromeService(
-        ChromeDriverManager().install()), chrome_options=chrome_options)
+        ChromeDriverManager().install()))
+
     url = config['url'] + "/login.jsp?permissionViolation=true&os_destination=%2Fsecure%2FTempo.jspa&page_caps=&user_role=#/my-work/timesheet"
     driver.get(url)
     # logar
@@ -39,7 +43,7 @@ def abrirJiraLoga(faltante=False):
         by=By.XPATH, value='//*[@id="login-form-password"]').send_keys(config['password'])
     driver.find_element(
         by=By.XPATH, value='//*[@id="login-form-submit"]').click()
-    abrirRegistro(driver, faltante)
+    abrirRegistro(driver, faltante=faltante, daily=daily)
 
 
 def dataIgual(value, str_hora, str_date, created):
@@ -126,8 +130,6 @@ def abrirExcel():
                             }, str_hora, str_date, created)
                             newTabela.append(append)
                         else:
-                            createdIni = datetime.strptime(dt.strftime(
-                                "%d/%b/%Y") + " 08:00:00", "%d/%b/%Y %H:%M:%S")
                             createdFim = datetime.strptime(dt.strftime(
                                 "%d/%b/%Y") + " " + hora, "%d/%b/%Y %H:%M:%S")
                             append = dataIgual({
@@ -175,7 +177,7 @@ def abrirExcelLancado():
     return arr
 
 
-def abrirRegistro(driver, faltante):
+def abrirRegistro(driver, faltante=False, daily=False):
 
     # driver.find_element(by=By.XPATH, value='//*[@id="logAnother"]').click()
     if faltante:
@@ -219,11 +221,9 @@ def preencher(driver, demanda, hora, data):
 
 
 def separarPorData(newTabela, lancado=True):
-    # global jalancado
 
     countHora = []
     if (lancado):
-        # if (not jalancado):
         countHora = separarPorData(abrirExcelLancado(), False)
 
     for i in range(len(newTabela)):
@@ -419,35 +419,53 @@ def verificarLancamentoIndevido():
 
 
 def verificarPeriodoInativo(str_date):
+    global anoLancamento
+
     periodoInativo = [
-        {'start': datetime(2022, 1, 1), 'end': datetime(2023, 7, 10)},
-        # {'start': datetime(2023, 6, 21), 'end': datetime(2023, 6, 30)},
+        {'start': datetime(2000, 1, 1), 'end': datetime(anoLancamento, 1, 1)},
+        {'start': datetime(anoLancamento+1, 1, 1), 'end': datetime(2100, 1, 1)}
     ]
 
     feriados = [
-        {'data': datetime(2023, 1, 1)},  # Ano Novo
-        {'data': datetime(2023, 2, 20)},  # Carnaval
-        {'data': datetime(2023, 2, 21)},  # Carnaval
-        {'data': datetime(2023, 2, 22)},  # Carnaval
-        {'data': datetime(2023, 4, 7)},  # Sexta-Feira Santa
-        {'data': datetime(2023, 4, 21)},  # Dia de Tiradentes
-        {'data': datetime(2023, 5, 1)},  # Dia do Trabalho
-        {'data': datetime(2023, 6, 8)},  # Corpus Christi
-        {'data': datetime(2023, 9, 7)},  # Independência do Brasil
-        {'data': datetime(2023, 9, 15)},  # Feriado Municipal
-        {'data': datetime(2023, 10, 12)},  # Nossa Senhora Aparecida
-        {'data': datetime(2023, 10, 15)},  # Dia do Professor
-        {'data': datetime(2023, 10, 28)},  # Dia do Servidor Público
-        {'data': datetime(2023, 11, 2)},  # Dia de Finados
-        {'data': datetime(2023, 11, 15)},  # Proclamação da República
-        {'data': datetime(2023, 12, 8)},  # Feriado Municipal
-        {'data': datetime(2023, 12, 25)},  # Natal
+        {'data': datetime(anoLancamento, 1, 1)},  # Ano Novo
+        {'data': datetime(anoLancamento, 2, 20)},  # Carnaval
+        {'data': datetime(anoLancamento, 2, 21)},  # Carnaval
+        {'data': datetime(anoLancamento, 2, 22)},  # Carnaval
+        {'data': datetime(anoLancamento, 4, 7)},  # Sexta-Feira Santa
+        {'data': datetime(anoLancamento, 4, 21)},  # Dia de Tiradentes
+        {'data': datetime(anoLancamento, 5, 1)},  # Dia do Trabalho
+        {'data': datetime(anoLancamento, 6, 8)},  # Corpus Christi
+        {'data': datetime(anoLancamento, 9, 7)},  # Independência do Brasil
+        {'data': datetime(anoLancamento, 9, 15)},  # Feriado Municipal
+        {'data': datetime(anoLancamento, 10, 12)},  # Nossa Senhora Aparecida
+        {'data': datetime(anoLancamento, 10, 15)},  # Dia do Professor
+        {'data': datetime(anoLancamento, 10, 28)},  # Dia do Servidor Público
+        {'data': datetime(anoLancamento, 11, 2)},  # Dia de Finados
+        {'data': datetime(anoLancamento, 11, 15)},  # Proclamação da República
+        {'data': datetime(anoLancamento, 12, 8)},  # Feriado Municipal
+        {'data': datetime(anoLancamento, 12, 25)},  # Natal
     ]
+
+    if "periodoInativo" in config and len(config['periodoInativo']):
+        for inativo in config['periodoInativo']:
+            if "fim" in inativo and inativo['fim']:
+                periodoInativo.append(
+                    {
+                        'start':  datetime.strptime(inativo['inicio'], "%d/%m/%Y"),
+                        'end': datetime.strptime(inativo['fim'], "%d/%m/%Y"),
+                    }
+                )
+            else:
+                feriado.append(
+                    {'data':  datetime.strptime(inativo['inicio'], "%d/%m/%Y")})
 
     created = str_date
     created = datetime.strptime(created, "%d/%b/%Y")
     created = datetime(
-        int(created.strftime("%Y")), int(created.strftime("%m"), ), int(created.strftime("%d")))
+        int(created.strftime("%Y")),
+        int(created.strftime("%m")),
+        int(created.strftime("%d"))
+    )
     for index in range(len(periodoInativo)):
         periodo = periodoInativo[index]
 
@@ -468,60 +486,76 @@ def verificarPeriodoInativo(str_date):
     return False
 
 
-def verificarDiasFaltante():
+def verificarDiasFaltante(daily=False):
+    global anoLancamento
     arrLancado = separarPorData(abrirExcelLancado(), False)
     dataFaltando = []
-    dateIni = datetime.strptime('01/01/2023', "%d/%m/%Y")
-    t2 = datetime.strptime('30/12/2023', "%d/%m/%Y")
+    dateIni = datetime.strptime(f'01/01/{anoLancamento}', "%d/%m/%Y")
+    t2 = datetime.strptime(f'30/12/{anoLancamento}', "%d/%m/%Y")
     diffData = abs((dateIni-t2).days)
     for sum in range(diffData):
         dataAt = dateIni + timedelta(days=sum)
         dataAt = dataAt.strftime("%d/%b/%Y")
         if not checkStrDate(arrLancado, dataAt):
-            # min = random.uniform(10, 20)
-            # dataFaltando.append(
-            #     {'str_date': dataAt, 'issue': 'GRA-149',   'time': min * 60})
-            min = 0
-            min = random.uniform(50, 59) - min
-            hor = random.uniform(6, 7)
+            if daily:
+                min = random.uniform(10, 20)
+                dataFaltando.append(
+                    {'str_date': dataAt, 'issue': 'GRA-149',   'time': min * 60})
+            else:
+                min = random.uniform(50, 59)
+                hor = random.uniform(6, 7)
 
-            dataFaltando.append(
-                {'str_date': dataAt, 'issue': 'GRA-71',  'time': ((hor*60)+min)*60})
+                dataFaltando.append(
+                    {'str_date': dataAt, 'issue': 'GRA-71',  'time': ((hor*60)+min)*60})
         else:
-            for index in range(len(arrLancado)):
-                value = arrLancado[index]
-                if value.get('str_date') == dataAt:
-                    min = random.uniform(25000, 26500)
-                    if value.get('time') < min:
-                        time = min-value.get('time')
-                        dataFaltando.append(
-                            {'str_date': dataAt, 'issue': 'GRA-71',  'time': time})
-                    break
+            if not daily:
+                for index in range(len(arrLancado)):
+                    value = arrLancado[index]
+                    if value.get('str_date') == dataAt:
+                        min = random.uniform(25000, 26500)
+                        if value.get('time') < min:
+                            time = min-value.get('time')
+                            dataFaltando.append(
+                                {'str_date': dataAt, 'issue': 'GRA-71',  'time': time})
+                        break
 
     return filtraFeriasTimeZerado(dataFaltando)
+
 
 def getHorasDemandaLancadoData():
     printHora(separarPorData(abrirExcelLancado(), False))
 
+
 def getHorasDemandaData():
     printHora(separarPorData(abrirExcel(), False))
+
 
 def getHorasDemanda():
     printHora(abrirExcel(), True)
 
+
 def getHorasFaltantes():
     printHora(verificarDiasFaltante(), True)
+
+
+def getHorasFaltantesDaily():
+    printHora(verificarDiasFaltante(daily=True), True)
+
 
 def menu():
     print("".center(50, "_"))
     print(" MENU ".center(50, "-") + "\n")
-    MENU = {'1': {'title': 'Lancar Horas demanda', 'function': abrirJiraLoga},
-            '2': {'title': 'Lancar Horas Faltantes', 'function': lancarHorasFaltante},
-            '3': {'title': 'Ver horas demanda lancado por data', 'function': getHorasDemandaLancadoData},
-            '4': {'title': 'Ver horas demanda por data', 'function': getHorasDemandaData},
-            '5': {'title': 'Ver horas demanda', 'function': getHorasDemanda},
-            '6': {'title': 'Ver horas faltante', 'function': getHorasFaltantes},
-            's': {'title': 'Sair'}}
+    MENU = {
+        '1': {'title': 'Lancar Horas demanda', 'function': lancarHorasDaily},
+        '2': {'title': 'Lancar Horas demanda', 'function': abrirJiraLoga},
+        '3': {'title': 'Lancar Horas Faltantes', 'function': lancarHorasFaltante},
+        '4': {'title': 'Ver horas demanda lancado por data', 'function': getHorasDemandaLancadoData},
+        '5': {'title': 'Ver horas demanda por data', 'function': getHorasDemandaData},
+        '6': {'title': 'Ver horas demanda', 'function': getHorasDemanda},
+        '7': {'title': 'Ver horas faltante', 'function': getHorasFaltantes},
+        '8': {'title': 'Ver horas daily', 'function': getHorasFaltantesDaily},
+        's': {'title': 'Sair'}
+    }
 
     for key, item in MENU.items():
         title = item.get('title', '').upper()
@@ -538,4 +572,6 @@ def menu():
         menu()
 
 
+print("".center(50, "_"))
+anoLancamento = int(input("\n Ano lancado (2023)? =>"))
 menu()

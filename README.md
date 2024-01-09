@@ -1,41 +1,41 @@
 # Jira
 
-## Prerequisites
+## Pré-requisitos
 
-Install using `pip`. You have to be on python >= 3.6.x in order to utilize this script.
+Instale usando `pip`. Você precisa estar em python >= 3.6.x para utilizar este script.
 
-- Download python and install on your device by visiting [python.org](https://python.org/downloads)
+- Baixe o python e instale no seu dispositivo visitando [python.org](https://python.org/downloads)
 
-## Installation
+## Instalação
 
-1. Clone the repo
+1. Clone o repositório
 
    ```sh
    git clone https://github.com/LFC94/PreencherJira.git
    ```
 
-2. Install the package's dependencies in requirements.txt with
-   pip by running
+2. Instale as dependências do pacote em requirements.txt executando o pip 
 
    ```sh
     pip install -r requirements.txt
    ```
 
-3. RENAME config.example.json TO config.json
+3. RENOMEAR config.example.json para config.json
 
-4. FILL in Jira **username** AND **password** AND **url** IN config.json
+4. PREENCHA com os dados do Jira **username** e **password** e **url** em config.json
 
-5. In the time_status.py file there is a KEY variable that must be changed to search for your demands
+5. No config.json pode adicionar os periodos que nao devera ser lancado como ferias, feriado local, ou periodo do anos nao desejado.
 
-6. To generate the list of demands, run
+
+6. Para gerar a lista de demandas, execute
 
    ```sh
    python time_status.py
    ```
 
-7. Copy generated list to project root with name jira.xlsx
+7. Copie a lista gerada (\STATUSPAGE\time_status.csv) para a raiz do projeto com o nome jira.xlsx
 
-8. Para preencher os dados de hora no jira executa
+8. Para preencher os dados de hora no jira executável
 
    ```sh
    python preencher.py
