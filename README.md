@@ -25,7 +25,7 @@ Certifique-se de ter o Python instalado em sua máquina com a versão igual ou s
 4. **Preencha o arquivo `config.json` com os dados do Jira, incluindo *username*, *password*, e *url***
 
 5. **No `config.json`, é possível adicionar períodos que não devem ser incluídos, como férias, feriados locais ou períodos indesejados do ano**
-   - Ex : Carnaval de 2023 (periodo) e Aniversario da Cidade (data unica)
+   - Ex : Carnaval de 2023 (período) e Aniversario da Cidade (data única)
    ```json
       "periodoInativo": [
           {
@@ -38,7 +38,7 @@ Certifique-se de ter o Python instalado em sua máquina com a versão igual ou s
      ]
    ```
 
-   - Ex : Lancar apartir de Agosto
+   - Ex : Lançar a partir de Agosto
    ```json
       "periodoInativo": [
           {
@@ -46,15 +46,19 @@ Certifique-se de ter o Python instalado em sua máquina com a versão igual ou s
             "fim": "31/07/2023"
           }
      ]
-   ```
 
-7. **Para gerar a lista de demandas, execute**
+6. **Para gerar a lista de demandas, execute**
 
    ```sh
    python time_status.py
    ```
+7. **Ira porguntar se deseja separa:**
 
-8. **Copie a lista gerada (localizada em `\STATUSPAGE\time_status.csv`) para a raiz do projeto com o nome `jira.xlsx`**
+   **Se sim:**
+   Copie a lista gerada (localizada em a raiz do projeto com o nome `output.xlsx`) para a raiz do projeto com o nome `jira.xlsx`
+
+   **Se não:**
+   Copie a lista gerada (localizada em `\STATUSPAGE\time_status.csv`) para a raiz do projeto com o nome `jira.xlsx`
 
 9. **Para preencher os dados de horas no Jira, execute**
 

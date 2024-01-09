@@ -1,5 +1,6 @@
 import json
 
+import pandas as pd
 from jiraone import LOGIN, PROJECT, USER, endpoint, file_reader
 from jiraone.module import time_in_status
 
@@ -38,8 +39,28 @@ dataFinal = input("\n Data Final? (Y-M-D 2023-12-31) =>")
 key = {
     "jql": f'"Equipe de atendimento" = "Evolutiva {evolutiva}" AND created >= {dataInicial} AND created <= {dataFinal} ORDER BY created DESC, updated DESC'}
 
-if (__name__ == "__main__"):
-    status = time_in_status(PROJECT, key, file_reader, pprint=True, is_printable=False,
-                            output_format="csv", report_folder="STATUSPAGE",
-                            login=LOGIN)
-    print(status)
+status = time_in_status(PROJECT, key, file_reader, pprint=True, is_printable=False,
+                        output_format="csv", report_folder="STATUSPAGE",
+                        login=LOGIN)
+
+print("".center(50, "_"))
+print("".center(50, "_"))
+print("".center(50, "_"))
+
+separar = input("\n Deseja separar as demanda no seu Email (S/N)? =>")
+
+if separar.upper() == 'S':
+    arquivo = pd.read_csv('STATUSPAGE/time_status.csv')
+    print(arquivo.columns)
+    arraySeparado = []
+    arraydemandas = []
+    for index, row in arquivo.iterrows():
+        if row['Author'] == config['user']:
+            arraydemandas.append(row['Issue Key'])
+
+    for index, row in arquivo.iterrows():
+        if row['Issue Key'] in arraydemandas:
+            arraySeparado.append({**row})
+
+    df1 = pd.DataFrame(arraySeparado, columns=arquivo.columns)
+    df1.to_excel("output.xlsx")
