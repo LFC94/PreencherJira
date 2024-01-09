@@ -514,7 +514,7 @@ def verificarDiasFaltante(daily=False):
                     if value.get('str_date') == dataAt:
                         min = random.uniform(25000, 26500)
                         if value.get('time') < min:
-                            time = min-value.get('time')
+                            time = min-value.get('time')-100
                             dataFaltando.append(
                                 {'str_date': dataAt, 'issue': 'GRA-71',  'time': time})
                         break
@@ -546,7 +546,7 @@ def menu():
     print("".center(50, "_"))
     print(" MENU ".center(50, "-") + "\n")
     MENU = {
-        '1': {'title': 'Lancar Horas demanda', 'function': lancarHorasDaily},
+        '1': {'title': 'Lancar Horas Daily', 'function': lancarHorasDaily},
         '2': {'title': 'Lancar Horas demanda', 'function': abrirJiraLoga},
         '3': {'title': 'Lancar Horas Faltantes', 'function': lancarHorasFaltante},
         '4': {'title': 'Ver horas demanda lancado por data', 'function': getHorasDemandaLancadoData},
