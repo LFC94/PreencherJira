@@ -27,7 +27,7 @@ def lancarHorasFaltante():
 
 
 def lancarHorasDaily():
-    abrirJiraLoga(daily=True)
+    abrirJiraLoga(faltante=True, daily=True)
 
 
 def abrirJiraLoga(faltante=False, daily=False):
@@ -181,7 +181,7 @@ def abrirRegistro(driver, faltante=False, daily=False):
 
     # driver.find_element(by=By.XPATH, value='//*[@id="logAnother"]').click()
     if faltante:
-        demanda = verificarDiasFaltante()
+        demanda = verificarDiasFaltante(daily=daily)
     else:
         demanda = abrirExcel()
 
