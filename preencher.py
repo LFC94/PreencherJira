@@ -23,7 +23,7 @@ anoLancamento = 2023
 
 
 def lancarHorasFaltante():
-    abrirJiraLoga(True)
+    abrirJiraLoga(faltante=True)
 
 
 def lancarHorasDaily():
@@ -231,11 +231,9 @@ def separarPorData(newTabela, lancado=True):
         time = value.get('time')
         if time <= 1800:
             time = 1800
+
         data = value.get('str_date')
         cont = int(time)
-        # hours = "%dh %dm" % hm_from_seconds(cont)
-        # print({'issue': value.get('issue'), 'str_date': value.get(
-        #     'str_date'), 'hours': hours}, end='\n')
 
         if checkStrDate(countHora, data):
             for i in range(len(countHora)):
@@ -303,8 +301,6 @@ def subtrairHora(newTabela, countHora):
                     time = 0
             else:
                 time = 0
-        # print(time, end='\n')
-        # exit()
     if (reajustar):
         return subtrairHora(newTabela, separarPorData(newTabela))
 
@@ -321,7 +317,6 @@ def printHora(arr, excel=False):
         hours2 = timedelta(seconds=stime)
         linha = {**value, 'hours': hours, 'hours2': str(hours2)}
         print(linha, end='\n')
-
         retorno.append(linha)
 
     print("****************************")
@@ -352,10 +347,8 @@ def checkStrDate(arr, str_date):
 def hm_from_seconds(seconds):
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
-    days, hours = divmod(hours, 24)
+    # days, hours = divmod(hours, 24)
     return (hours, minutes)
-
-    # driver.close()
 
 
 def formataDataJira(data):
@@ -428,21 +421,16 @@ def verificarPeriodoInativo(str_date):
 
     feriados = [
         {'data': datetime(anoLancamento, 1, 1)},  # Ano Novo
-        {'data': datetime(anoLancamento, 2, 20)},  # Carnaval
-        {'data': datetime(anoLancamento, 2, 21)},  # Carnaval
-        {'data': datetime(anoLancamento, 2, 22)},  # Carnaval
         {'data': datetime(anoLancamento, 4, 7)},  # Sexta-Feira Santa
         {'data': datetime(anoLancamento, 4, 21)},  # Dia de Tiradentes
         {'data': datetime(anoLancamento, 5, 1)},  # Dia do Trabalho
         {'data': datetime(anoLancamento, 6, 8)},  # Corpus Christi
         {'data': datetime(anoLancamento, 9, 7)},  # Independência do Brasil
-        {'data': datetime(anoLancamento, 9, 15)},  # Feriado Municipal
         {'data': datetime(anoLancamento, 10, 12)},  # Nossa Senhora Aparecida
         {'data': datetime(anoLancamento, 10, 15)},  # Dia do Professor
         {'data': datetime(anoLancamento, 10, 28)},  # Dia do Servidor Público
         {'data': datetime(anoLancamento, 11, 2)},  # Dia de Finados
         {'data': datetime(anoLancamento, 11, 15)},  # Proclamação da República
-        {'data': datetime(anoLancamento, 12, 8)},  # Feriado Municipal
         {'data': datetime(anoLancamento, 12, 25)},  # Natal
     ]
 
@@ -456,7 +444,7 @@ def verificarPeriodoInativo(str_date):
                     }
                 )
             else:
-                feriado.append(
+                feriados.append(
                     {'data':  datetime.strptime(inativo['inicio'], "%d/%m/%Y")})
 
     created = str_date
@@ -547,8 +535,8 @@ def menu():
     print(" MENU ".center(50, "-") + "\n")
     MENU = {
         '1': {'title': 'Lancar Horas Daily', 'function': lancarHorasDaily},
-        '2': {'title': 'Lancar Horas demanda', 'function': abrirJiraLoga},
-        '3': {'title': 'Lancar Horas Faltantes', 'function': lancarHorasFaltante},
+        '2': {'title': 'Lancar Horas Faltantes (Demanda)', 'function': abrirJiraLoga},
+        '3': {'title': 'Lancar Horas Faltantes (Reuniao)', 'function': lancarHorasFaltante},
         '4': {'title': 'Ver horas demanda lancado por data', 'function': getHorasDemandaLancadoData},
         '5': {'title': 'Ver horas demanda por data', 'function': getHorasDemandaData},
         '6': {'title': 'Ver horas demanda', 'function': getHorasDemanda},
