@@ -1,14 +1,11 @@
 # selenium 4
-import array
 import json
 import os.path
 import random
 import time
 from datetime import datetime, timedelta
 
-import numpy as np
 import pandas as pd
-from IPython.display import display
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -17,6 +14,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
+
+from uteis import menuTelas
 
 config = json.load(open('config.json'))
 anoLancamento = 2023
@@ -421,16 +420,15 @@ def verificarPeriodoInativo(str_date):
 
     feriados = [
         {'data': datetime(anoLancamento, 1, 1)},  # Ano Novo
-        {'data': datetime(anoLancamento, 4, 7)},  # Sexta-Feira Santa
         {'data': datetime(anoLancamento, 4, 21)},  # Dia de Tiradentes
         {'data': datetime(anoLancamento, 5, 1)},  # Dia do Trabalho
-        {'data': datetime(anoLancamento, 6, 8)},  # Corpus Christi
         {'data': datetime(anoLancamento, 9, 7)},  # Independência do Brasil
         {'data': datetime(anoLancamento, 10, 12)},  # Nossa Senhora Aparecida
         {'data': datetime(anoLancamento, 10, 15)},  # Dia do Professor
         {'data': datetime(anoLancamento, 10, 28)},  # Dia do Servidor Público
         {'data': datetime(anoLancamento, 11, 2)},  # Dia de Finados
         {'data': datetime(anoLancamento, 11, 15)},  # Proclamação da República
+        {'data': datetime(anoLancamento, 11, 20)},  # Consciência Negra
         {'data': datetime(anoLancamento, 12, 25)},  # Natal
     ]
 
@@ -531,8 +529,6 @@ def getHorasFaltantesDaily():
 
 
 def menu():
-    print("".center(50, "_"))
-    print(" MENU ".center(50, "-") + "\n")
     MENU = {
         '1': {'title': 'Lancar Horas Daily', 'function': lancarHorasDaily},
         '2': {'title': 'Lancar Horas Faltantes (Demanda)', 'function': abrirJiraLoga},
@@ -542,24 +538,12 @@ def menu():
         '6': {'title': 'Ver horas demanda', 'function': getHorasDemanda},
         '7': {'title': 'Ver horas faltante', 'function': getHorasFaltantes},
         '8': {'title': 'Ver horas daily', 'function': getHorasFaltantesDaily},
-        's': {'title': 'Sair'}
     }
-
-    for key, item in MENU.items():
-        title = item.get('title', '').upper()
-        print(f"[{key}] - {title}")
-    opcao = input("\n=>")
-
-    if opcao not in MENU.keys():
-        print("Operação inválida")
-
-    if opcao in MENU.keys() and MENU[opcao].get('function', False):
-        print(MENU.get(opcao).get('title').upper().center(50, "-"))
-        MENU[opcao].get('function')()
-        print("".center(50, "_"))
-        menu()
+    menuTelas(MENU)
 
 
-print("".center(50, "_"))
-anoLancamento = int(input("\n Ano lancado (2023)? =>"))
-menu()
+def inicio():
+    print("".center(50, "_"))
+    global anoLancamento
+    anoLancamento = int(input("\n Ano lancado (2023)? =>"))
+    menu()

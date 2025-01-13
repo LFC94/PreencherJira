@@ -14,10 +14,10 @@ Certifique-se de ter o Python instalado em sua máquina com a versão igual ou s
    git clone https://github.com/LFC94/PreencherJira.git
    ```
 
-2. **Instale as dependências do pacote listadas no arquivo `requirements.txt` usando o pip**
+2. **Instale as dependências do PIPENV usando o pip**
 
    ```sh
-   pip install -r requirements.txt
+   pip install pipenv
    ```
 
 3. **Renomeie o arquivo `config.example.json` para `config.json`**
@@ -50,8 +50,10 @@ Certifique-se de ter o Python instalado em sua máquina com a versão igual ou s
 6. **Para gerar a lista de demandas, execute**
 
    ```sh
-   python time_status.py
+   pipenv init
    ```
+   Selecionar a opção 1 - Buscar Demanda
+
 7. **Ira porguntar se deseja separa:**
 
    **Se sim:**
@@ -63,5 +65,6 @@ Certifique-se de ter o Python instalado em sua máquina com a versão igual ou s
 9. **Para preencher os dados de horas no Jira, execute**
 
    ```sh
-   python preencher.py
+   pipenv init
    ```
+   Selecionar a opção 2 - Gerar Dados
