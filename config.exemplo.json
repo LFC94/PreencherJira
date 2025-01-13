@@ -5,10 +5,20 @@
   "periodoInativo": [
     {
       "inicio": "01/01/2023",
-      "fim": "30/01/2023"
+      "fim": "30/01/2023",
+      "motivo": "Feris"
     },
     {
-      "inicio": ""
+      "inicio": "01/12/2000",
+      "motivo": "Feriado Municipal"
+    },
+    {
+      "inicio": "30/05/2001",
+      "motivo": "Corpus Christi"
+    },
+    {
+      "inicio": "29/03/2001",
+      "motivo": "Sexta-Feira Santa"
     }
   ]
 }

@@ -30,8 +30,13 @@ def lancarHorasDaily():
 
 
 def abrirJiraLoga(faltante=False, daily=False):
-    driver = webdriver.Chrome(service=ChromeService(
-        ChromeDriverManager().install()))
+    chrome_install = ChromeDriverManager().install()
+    folder = os.path.dirname(chrome_install)
+    chromedriver_path = os.path.join(folder, "chromedriver.exe")
+
+    service = ChromeService(chromedriver_path)
+
+    driver = webdriver.Chrome(service=service)
 
     url = config['url'] + "/login.jsp?permissionViolation=true&os_destination=%2Fsecure%2FTempo.jspa&page_caps=&user_role=#/my-work/timesheet"
     driver.get(url)
