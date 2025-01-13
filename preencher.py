@@ -429,8 +429,6 @@ def verificarPeriodoInativo(str_date):
         {'data': datetime(anoLancamento, 5, 1)},  # Dia do Trabalho
         {'data': datetime(anoLancamento, 9, 7)},  # Independência do Brasil
         {'data': datetime(anoLancamento, 10, 12)},  # Nossa Senhora Aparecida
-        {'data': datetime(anoLancamento, 10, 15)},  # Dia do Professor
-        {'data': datetime(anoLancamento, 10, 28)},  # Dia do Servidor Público
         {'data': datetime(anoLancamento, 11, 2)},  # Dia de Finados
         {'data': datetime(anoLancamento, 11, 15)},  # Proclamação da República
         {'data': datetime(anoLancamento, 11, 20)},  # Consciência Negra
