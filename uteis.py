@@ -2,7 +2,7 @@ import json
 import os
 import re
 
-from InquirerPy import prompt
+from InquirerPy import inquirer, prompt
 from InquirerPy.base.control import Choice
 
 
@@ -16,7 +16,7 @@ def validateJSON(jsonData):
 
 def menuTelas(MENU={}):
     print("".center(50, "_"))
-    print("MENU CENSO".center(50, "-") + "\n")
+    print("MENUS".center(50, "-") + "\n")
     MENU['s'] = {'title': 'Sair'}
     choices = []
     for key, item in MENU.items():
@@ -76,3 +76,21 @@ def extract_start(text, end):
         return match.group(1).strip() if match else None
     except BufferError as err:
         return None
+
+
+def confirmacao(message):
+    return inquirer.confirm(
+        message=message,
+        default=True,
+        confirm_letter="s",
+        reject_letter="n",
+        transformer=lambda result: "Sim" if result else "Não",
+    ).execute()
+
+
+def inputText(message):
+    return inquirer.text(message=message).execute()
+
+
+def inputNumber(message):
+    return inquirer.number(message=message).execute()

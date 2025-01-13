@@ -4,6 +4,9 @@ import pandas as pd
 from jiraone import LOGIN, PROJECT, USER, endpoint, file_reader
 from jiraone.module import time_in_status
 
+from uteis import confirmacao, inputNumber, inputText
+
+
 def buscarDemanda():
     LOGIN.api = False
     config = json.load(open('config.json'))
@@ -32,10 +35,10 @@ def buscarDemanda():
     #     "jql": 'updated >= 2022-01-01 AND updated <= 2022-12-31 AND author in ("'+name+'") ORDER BY updated DESC'}
 
     print("".center(50, "_"))
-    print(" Buscar as demandas ".center(50, "-") + "\n")
-    evolutiva = input("\n Qual Evolutiva? (1, 2, 3) =>")
-    dataInicial = input("\n Data Inicial? (Y-M-D 2023-01-01) =>")
-    dataFinal = input("\n Data Final? (Y-M-D 2023-12-31) =>")
+    print(" Buscar as demandas ".center(50, "-"))
+    evolutiva = inputNumber("Qual Evolutiva (1, 2, 3)")
+    dataInicial = inputText("Data Inicial (Y-M-D 2023-01-01)")
+    dataFinal = inputText("Data Final (Y-M-D 2023-12-31)")
 
     key = {
         "jql": f'"Equipe de atendimento" = "Evolutiva {evolutiva}" AND created >= {dataInicial} AND created <= {dataFinal} ORDER BY created DESC, updated DESC'}
@@ -48,20 +51,22 @@ def buscarDemanda():
     print("".center(50, "_"))
     print("".center(50, "_"))
 
-    separar = input("\n Deseja separar as demanda no seu Email (S/N)? =>")
+    separar = confirmacao("Deseja separar as demanda pelo user:")
 
-    if separar.upper() == 'S':
+    if separar:
         arquivo = pd.read_csv('STATUSPAGE/time_status.csv')
         print(arquivo.columns)
         arraySeparado = []
         arraydemandas = []
-        for index, row in arquivo.iterrows():
+        for _, row in arquivo.iterrows():
             if row['Author'] == config['user']:
                 arraydemandas.append(row['Issue Key'])
 
-        for index, row in arquivo.iterrows():
+        for _, row in arquivo.iterrows():
             if row['Issue Key'] in arraydemandas:
                 arraySeparado.append({**row})
 
         df1 = pd.DataFrame(arraySeparado, columns=arquivo.columns)
+        df1['Created'] = df1['Created'].apply(
+            lambda d: pd.to_datetime(d).strftime('%Y-%m-%d %H:%M:%S'))
         df1.to_excel("output.xlsx")
